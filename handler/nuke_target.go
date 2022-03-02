@@ -11,12 +11,13 @@ import (
 	"syscall"
 
 	logw "github.com/andriiyaremenko/logwriter"
+	"github.com/andriiyaremenko/mg/client"
 	"github.com/andriiyaremenko/mg/dto"
 	"github.com/andriiyaremenko/tinycqs/command"
 	"github.com/pkg/errors"
 )
 
-func NukeTarget(client http.Client, amountRequests int64) command.Handler {
+func NukeTarget(amountRequests int64) command.Handler {
 	return &command.BaseHandler{
 		Type: "NUKE_TARGET",
 		HandleFunc: func(ctx context.Context, w command.EventWriter, e command.Event) {
@@ -32,6 +33,12 @@ func NukeTarget(client http.Client, amountRequests int64) command.Handler {
 			target := new(dto.Target)
 			if err := json.Unmarshal(p, target); err != nil {
 				w.Write(command.NewErrEvent(e, errors.Wrap(err, "bad target record")))
+				return
+			}
+
+			client, err := client.WithProxy(target.Proxy)
+			if err != nil {
+				w.Write(command.NewErrEvent(e, errors.Wrap(err, "bad target proxy record")))
 				return
 			}
 
