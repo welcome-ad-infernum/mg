@@ -17,8 +17,8 @@ import (
 )
 
 func main() {
-	t := flag.String("t", "file", "source type to use (file or endpoint)")
-	s := flag.String("s", "ukraine.txt", "url to endpoint or file name")
+	t := flag.String("t", "endpoint", "source type to use (file or endpoint)")
+	s := flag.String("s", "https://api.itemstolist.top/api/target", "url to endpoint or file name")
 	workersPerCore := flag.Int("w", 10, "number of workers per logical CPU")
 	amountRequests := flag.Int64("n", 1000000, "number of requests per each target")
 
