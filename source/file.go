@@ -26,7 +26,7 @@ func GetFromFile(filePath string) Source {
 		defer func() { i++ }()
 
 		target := &dto.Target{
-			ID:      "",
+			ID:      0,
 			URL:     urls[i],
 			Method:  "",
 			Data:    nil,

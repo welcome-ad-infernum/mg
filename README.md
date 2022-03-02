@@ -18,7 +18,7 @@
 
 ```json
 {
-	"id": "<random-uuid>",
+	"id": 0,
 	"url": "https://example.ru",
 	"method": "GET",
 	"data": null,
