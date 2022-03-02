@@ -25,6 +25,6 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: |
+        tags: |-
           vladstarr/mg-agent:$SHORT_SHA
           vladstarr/mg-agent:latest
