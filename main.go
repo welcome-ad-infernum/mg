@@ -19,7 +19,7 @@ import (
 func main() {
 	t := flag.String("t", "file", "source type to use (file or endpoint)")
 	s := flag.String("s", "ukraine.txt", "url to endpoint or file name")
-	workersPerCore := flag.Int("w", 10, "number of workers per one logical CPU")
+	workersPerCore := flag.Int("w", 10, "number of workers per logical CPU")
 	amountRequests := flag.Int64("n", 1000000, "number of requests per each target")
 
 	ctx := context.Background()
