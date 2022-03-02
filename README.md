@@ -4,7 +4,7 @@
 
 ### With defaults:
 
- * IOS `mg`
+ * MacOS `mg`
  * Windows `mg.exe`
 
 ### Available flags:
@@ -26,3 +26,12 @@
 	"proxy_url": null
 }
 ```
+
+### For non-technical users:
+
+ 1. Go to [releases page](https://github.com/welcome-ad-infernum/mg/releases).
+ 2. Find the latest release.
+ 3. Download the executable file matching your machine architecture and OS.
+ 4. Open your terminal (`Terminal` for MacOS, `CMD` or `PowerShell` for Windows)
+ 6. Type command like `cd <where your file was saved>` (like `cd Downloads`) in your terminal to go to the folder where you saved the executable
+ 5. Run `./mg` or `.\mg.exe` depending on your platform with flags described above
