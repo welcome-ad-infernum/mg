@@ -22,7 +22,7 @@
 	"url": "https://example.ru",
 	"method": "GET",
 	"data": null,
-	"headers": [[<header-key>, <header-value>]],
+	"headers": [["<header-key>", "<header-value>"]],
 	"proxy_url": null
 }
 ```
