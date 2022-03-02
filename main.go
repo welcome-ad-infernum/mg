@@ -33,18 +33,19 @@ func main() {
 	var readSource command.Handler
 	switch *t {
 	case "file":
-		readSource = handler.ReadSource(source.GetFromFile(*s))
+		readSource = handler.ReadSource(source.GetFromFile(*s), numWorkers)
 		log.Printf("reading from file %s", *s)
 	case "endpoint":
-		readSource = handler.ReadSource(source.GetFromEndpoint(client.New(), *s))
+		readSource = handler.ReadSource(source.GetFromEndpoint(client.New(), *s), numWorkers)
 		log.Printf("reading from endpoint %s", *s)
 	default:
 		log.Fatalln(logw.Error.WithMessage("source type %s is unsupported", *t))
 	}
 
-	comm, err := command.New(
+	comm, err := command.NewWithConcurrencyLimit(
+		numWorkers,
 		readSource,
-		handler.NukeTarget(client.New(), numWorkers, *amountRequests),
+		handler.NukeTarget(client.New(), *amountRequests),
 		handler.TargetDown(log),
 		handler.TargetAlive(log),
 		handler.TargetError(log),

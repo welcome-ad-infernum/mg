@@ -9,13 +9,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ReadSource(s source.Source) command.Handler {
+func ReadSource(s source.Source, amountWorkers int) command.Handler {
 	return &command.BaseHandler{
-		Type: "READ_SOURCE",
+		Type:     "READ_SOURCE",
+		NWorkers: 1,
 		HandleFunc: func(ctx context.Context, w command.EventWriter, e command.Event) {
 			defer w.Done()
+            println("got here")
 
-			for target, keep, err := s(); keep; {
+			for target, keep, err := s(); keep; target, keep, err = s() {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
 				if err != nil {
 					w.Write(command.NewErrEvent(e, errors.Wrap(err, "error:")))
 
@@ -29,10 +37,12 @@ func ReadSource(s source.Source) command.Handler {
 					continue
 				}
 
-				w.Write(command.E{
-					Type: "NUKE_TARGET",
-					P:    b,
-				})
+				for i := amountWorkers; i > 0; i-- {
+					w.Write(command.E{
+						Type: "NUKE_TARGET",
+						P:    b,
+					})
+				}
 			}
 		},
 	}
