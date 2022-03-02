@@ -33,7 +33,7 @@ jobs:
     - name: Build Windows amd64
       run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -o bin/mg_win_amd64.exe
 
-    - name: Upload artifcats
+    - name: Upload release
       uses: ncipollo/release-action@v1
       with:
         artifacts: "bin/**"
