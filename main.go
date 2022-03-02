@@ -45,7 +45,7 @@ func main() {
 	comm, err := command.NewWithConcurrencyLimit(
 		numWorkers,
 		readSource,
-		handler.NukeTarget(client.New(), *amountRequests),
+		handler.NukeTarget(*amountRequests),
 		handler.TargetDown(log),
 		handler.TargetAlive(log),
 		handler.TargetError(log),
