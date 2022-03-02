@@ -79,7 +79,7 @@ func NukeTarget(amountRequests int64) command.Handler {
 					w.Write(
 						command.NewErrEvent(
 							e,
-							errors.Wrap(err, "attac failed, target filters traffic"),
+							errors.Wrap(err, "attack failed, target filters traffic"),
 						),
 					)
 					return

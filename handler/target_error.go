@@ -24,7 +24,7 @@ func TargetError(log *log.Logger) command.Handler {
 			}
 
 			log.Println(
-				logw.Warn.
+				logw.Debug.
 					WithString("target", target.URL).
 					WithInt("status_code", target.ErrCode),
 				"target returned error",

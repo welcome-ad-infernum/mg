@@ -5,6 +5,7 @@ import (
 	"log"
 
 	logw "github.com/andriiyaremenko/logwriter"
+	"github.com/andriiyaremenko/logwriter/color"
 	"github.com/andriiyaremenko/tinycqs/command"
 )
 
@@ -20,7 +21,7 @@ func HandleErrors(log *log.Logger) command.Handler {
 				return
 			}
 
-			log.Println(logw.Error, errEvent.Unwrap())
+			log.Println(logw.Debug, color.ColorizeText(color.ANSIColorRed, errEvent.Unwrap().Error()))
 		},
 	}
 }
