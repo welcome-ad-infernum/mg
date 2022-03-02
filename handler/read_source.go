@@ -15,7 +15,6 @@ func ReadSource(s source.Source, amountWorkers int) command.Handler {
 		NWorkers: 1,
 		HandleFunc: func(ctx context.Context, w command.EventWriter, e command.Event) {
 			defer w.Done()
-            println("got here")
 
 			for target, keep, err := s(); keep; target, keep, err = s() {
 				select {
