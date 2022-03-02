@@ -1,0 +1,2 @@
+1. Application {{.Release.Name}} successfully deployed to your cluster. 
+  Happy DDoS-ing!
