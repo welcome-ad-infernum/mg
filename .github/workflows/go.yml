@@ -26,11 +26,14 @@ jobs:
     - name: Build Linux amd64
       run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -o bin/mg_linux_amd64
 
-    - name: Build Linux amd64
+    - name: Build Linux arm64
       run: GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -v -o bin/mg_linux_arm64
 
     - name: Build Windows amd64
-      run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -o bin/mg_win_amd64.exe
+      run: GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -v -o bin/mg_win_amd64.exe
+
+    - name: Build Windows arm64
+      run: GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -v -o bin/mg_win_arm64.exe
 
     - name: Upload artifcats to release 
       uses: ncipollo/release-action@v1
