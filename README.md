@@ -18,13 +18,21 @@ I.e. `./mg -s https://api.itemstolist.top/api/target -t endpoint`
 
 ### Docker image
 
- * You can run it using command `docker run --rm -d --name "mg" vladstarr/mg-agent:latest [args]`
- * Alternatively, you can use docker-compose.yaml file from this repo. Run it using `docker-compose up -d`
+ * You can run it using command
+   `docker run --rm -d --name "mg" vladstarr/mg-agent:latest [args]`
+ * Alternatively, you can use docker-compose.yaml file from this repo.
+   Run it using `docker-compose up -d`
 
 ### Helm chart
 
  * You can deploy the agent to your Kubernetes cluster using the Helm chart in this repo.
- The command for deployment is `helm upgrade --install --namespace mg --create-namespace mg-agent helm-chart/mg-agent`
+ The command for deployment is 
+ ```
+ 	helm upgrade mg-agent helm-chart/mg-agent \
+	--namespace mg \
+	--create-namespace \
+	--install
+ ```
  
  * You can always customize the values.yaml of the chart for your needs. `agent` section options are treated as argument for the go binary.
 
