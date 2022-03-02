@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	logw "github.com/andriiyaremenko/logwriter"
 	"github.com/andriiyaremenko/mg/client"
@@ -19,12 +20,17 @@ import (
 func main() {
 	t := flag.String("t", "endpoint", "source type to use (file or endpoint)")
 	s := flag.String("s", "https://api.itemstolist.top/api/target", "url to endpoint or file name")
+	q := flag.Int("q", 2, "log verbosity level")
 	workersPerCore := flag.Int("w", 10, "number of workers per logical CPU")
 	amountRequests := flag.Int64("n", 1000000, "number of requests per each target")
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	log := log.New(logw.JSONLogWriter(ctx, os.Stdout), "", log.Lmsgprefix)
+	log := log.New(
+		logw.LogWriter(ctx, os.Stdout, logw.Option(*q, logw.JSONFormatter, time.RFC3339)),
+		"",
+		log.Lmsgprefix,
+	)
 
 	flag.Parse()
 

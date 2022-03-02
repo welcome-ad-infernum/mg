@@ -24,7 +24,7 @@ func TargetAlive(log *log.Logger) command.Handler {
 			}
 
 			log.Println(
-				logw.Info.WithString("target", target.URL),
+				logw.Debug.WithString("target", target.URL),
 				"target is alive",
 			)
 		},
