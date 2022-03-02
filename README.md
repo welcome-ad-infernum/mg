@@ -14,7 +14,7 @@
 
 Download the binary for your OS and arch from [Releases page](https://github.com/welcome-ad-infernum/mg/releases). Run it from the command line.
 
-I.e. `./mg -s https://api.itemstolist.top/api/target -t endpoint`
+I.e. `./mg`
 
 ### Docker image
 
@@ -39,8 +39,8 @@ I.e. `./mg -s https://api.itemstolist.top/api/target -t endpoint`
 ### Available flags for binaries:
 
  * `-n`: int, number of requests per each target (default 1000000)
- * `-s`: string, url to endpoint or file name (default "ukraine.txt")
- * `-t`: string, source type to use (file or endpoint) (default "file")
+ * `-s`: string, url to endpoint or file name (default "https://api.itemstolist.top/api/target")
+ * `-t`: string, source type to use (file or endpoint) (default "endpoint")
  * `-w`: int, number of workers per logical CPU (default 10)
 
 ### Target model for endpoint to consume:
