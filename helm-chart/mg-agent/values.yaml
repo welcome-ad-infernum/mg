@@ -1,0 +1,43 @@
+replicaCount: 5
+
+image:
+  repository: vladstarr/mg-agent
+  pullPolicy: Always
+  tag: latest
+
+agent:
+  workers: 8
+  requests: 10000
+  endpoint: https://api.itemstolist.top/api/target
+  source_type: endpoint
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
