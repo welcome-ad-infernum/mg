@@ -28,10 +28,10 @@ I.e. `./mg -s https://api.itemstolist.top/api/target -t endpoint`
  * You can deploy the agent to your Kubernetes cluster using the Helm chart in this repo.
  The command for deployment is 
  ```
- 	helm upgrade mg-agent helm-chart/mg-agent \
-	--namespace mg \
-	--create-namespace \
-	--install
+helm upgrade mg-agent helm-chart/mg-agent \
+--namespace mg \
+--create-namespace \
+--install
  ```
  
  * You can always customize the values.yaml of the chart for your needs. `agent` section options are treated as arguments for the go binary.
