@@ -1,0 +1,5 @@
+go.sum
+*.md
+.gitignore
+.github/
+kubernetes/
