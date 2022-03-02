@@ -1,11 +1,12 @@
 github.com/andriiyaremenko/logwriter v0.0.1 h1:CG+/o3hl4x2+MgNa9kE25961WE8d98y46Jf8509SpBA=
 github.com/andriiyaremenko/logwriter v0.0.1/go.mod h1:NHfuOxQTCu7O3zT+LPzQNcciDbi7JhP4DwfG/RD4DrU=
-github.com/andriiyaremenko/tinycqs v0.0.1 h1:saFHCr/UaU6TiDiXhn2RSdZk4YQUZpAVyGPuTbwfvjw=
-github.com/andriiyaremenko/tinycqs v0.0.1/go.mod h1:we1WDUxHbKhO8/Cu2Zsf9b9IWcgkVX1xEra1knFez9c=
+github.com/andriiyaremenko/tinycqs v0.0.2 h1:Wg1Rz34SZ5XDix063oKMlJLIZ9Ts6AcSQJW+RGQfQUQ=
+github.com/andriiyaremenko/tinycqs v0.0.2/go.mod h1:we1WDUxHbKhO8/Cu2Zsf9b9IWcgkVX1xEra1knFez9c=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/google/uuid v1.1.5 h1:kxhtnfFVi+rYdOALN0B3k9UT86zVJKfBimRaciULW4I=
 github.com/google/uuid v1.1.5/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=

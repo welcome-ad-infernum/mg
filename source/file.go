@@ -29,8 +29,8 @@ func GetFromFile(filePath string) Source {
 			ID:      "",
 			URL:     urls[i],
 			Method:  "",
-			Data:    []byte{},
-			Headers: [][2]string{},
+			Data:    nil,
+			Headers: nil,
 			Proxy:   "",
 		}
 
@@ -43,8 +43,6 @@ func readFile(filePath string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 
@@ -65,6 +63,8 @@ func readFile(filePath string) ([]string, error) {
 			lines = append(lines, line)
 		}
 	}
+
+	file.Close()
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
