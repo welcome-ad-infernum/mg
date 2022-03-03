@@ -1,7 +1,7 @@
 github.com/andriiyaremenko/logwriter v0.0.1 h1:CG+/o3hl4x2+MgNa9kE25961WE8d98y46Jf8509SpBA=
 github.com/andriiyaremenko/logwriter v0.0.1/go.mod h1:NHfuOxQTCu7O3zT+LPzQNcciDbi7JhP4DwfG/RD4DrU=
-github.com/andriiyaremenko/tinycqs v0.0.2 h1:Wg1Rz34SZ5XDix063oKMlJLIZ9Ts6AcSQJW+RGQfQUQ=
-github.com/andriiyaremenko/tinycqs v0.0.2/go.mod h1:we1WDUxHbKhO8/Cu2Zsf9b9IWcgkVX1xEra1knFez9c=
+github.com/andriiyaremenko/tinycqs v0.0.3 h1:QmZHtZl+9m1yBeLiPEwu3nTDhEeNKb4+UYGab6eoHN4=
+github.com/andriiyaremenko/tinycqs v0.0.3/go.mod h1:we1WDUxHbKhO8/Cu2Zsf9b9IWcgkVX1xEra1knFez9c=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/uuid v1.1.5/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=

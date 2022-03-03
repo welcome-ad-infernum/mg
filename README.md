@@ -42,6 +42,7 @@ helm upgrade mg-agent helm-chart/mg-agent \
  * `-s`: string, url to endpoint or file name (default "https://api.itemstolist.top/api/target")
  * `-t`: string, source type to use (file or endpoint) (default "endpoint")
  * `-w`: int, number of workers per logical CPU (default 10)
+ * `-q`: int, log verbosity level (default 2)
 
 ### Target model for endpoint to consume:
 

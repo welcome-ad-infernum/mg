@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/andriiyaremenko/mg/dto"
 )
@@ -28,6 +29,7 @@ func GetFromEndpoint(client http.Client, managerURL string) Source {
 			return nil, true, err
 		}
 
+		target.URL = strings.TrimSpace(target.URL)
 		return target, true, nil
 	}
 }

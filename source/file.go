@@ -25,6 +25,19 @@ func GetFromFile(filePath string) Source {
 	return func() (*dto.Target, bool, error) {
 		defer func() { i++ }()
 
+		if i < len(urls)-1 {
+			target := &dto.Target{
+				ID:      0,
+				URL:     urls[len(urls)-1],
+				Method:  "",
+				Data:    nil,
+				Headers: nil,
+				Proxy:   "",
+			}
+
+			return target, i < len(urls)-1, nil
+		}
+
 		target := &dto.Target{
 			ID:      0,
 			URL:     urls[i],
@@ -34,7 +47,7 @@ func GetFromFile(filePath string) Source {
 			Proxy:   "",
 		}
 
-		return target, i < len(urls)-1, nil
+		return target, i < len(urls), nil
 	}
 }
 

