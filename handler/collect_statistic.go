@@ -84,11 +84,11 @@ func startStatisticCollection(ctx context.Context, log *log.Logger, statEndpoint
 				r.Body.Close()
 
 				if r.StatusCode >= 300 {
-					log.Println(logw.Error, errors.Errorf("failed to send statistics: code %d, body: %s", r.StatusCode, body))
+					log.Println(logw.Error, errors.Errorf("failed to send statistics: code %s, body: %s", r.Status, body))
 					continue
 				}
 
-				log.Println("statistic was sent")
+				log.Printf("statistic was sent, response status code %s", r.Status)
 			}
 		}
 	}
