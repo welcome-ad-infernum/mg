@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  mg:
+    image: vladstarr/mg-agent:latest
+    restart: always
+    network_mode: host
+    # Uncomment if you want to change the arguments
+    # command:
+    #   - -t
+    #   - endpoint
+    #   - -n 
+    #   - "100000"
+    #   - -w
+    #   - "8"
+    #   - -s 
+    #   - https://api.itemstolist.top/api/target
+    #   - -q
+    #   - "1"

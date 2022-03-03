@@ -1,0 +1,13 @@
+[Unit]
+Description=MG
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/usr/local/bin/mg
+
+[Install]
+WantedBy=multi-user.target

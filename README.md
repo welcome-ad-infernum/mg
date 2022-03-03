@@ -2,9 +2,9 @@
 
 ## Supported platforms
 
- * Windows
- * macOS
- * Linux
+ * Windows binary
+ * macOS binary
+ * Linux binary and systemd script
  * Docker container
  * Helm chart for Kubernetes
 
@@ -16,25 +16,30 @@ Download the binary for your OS and arch from [Releases page](https://github.com
 
 I.e. `./mg`
 
+### Linux systemd script
+
+* Download `examples/systemd` folder to your PC or server. 
+* Install it using `sudo bash install.sh`
+* Uninstall it using `sudo bash uninstall.sh`
+
 ### Docker image
 
  * You can run it using command
-   `docker run --rm -d --name "mg" vladstarr/mg-agent:latest [args]`
- * Alternatively, you can use docker-compose.yaml file from this repo.
+   `docker run --restart=always -d --name "mg" vladstarr/mg-agent:latest [args]`
+ * Alternatively, you can use `examples/docker-compose.yaml` file from this repo.
    Run it using `docker-compose up -d`
 
 ### Helm chart
 
- * You can deploy the agent to your Kubernetes cluster using the Helm chart in this repo.
+ * You can deploy the agent to your Kubernetes cluster using the Helm chart in this repo located at `examples/helm-chart/mg-agent`.
  The command for deployment is 
  ```
-helm upgrade mg-agent helm-chart/mg-agent \
+helm upgrade mg-agent examples/helm-chart/mg-agent \
 --namespace mg \
 --create-namespace \
 --install
  ```
- 
- * You can always customize the values.yaml of the chart for your needs. `agent` section options are treated as arguments for the go binary.
+ * You can always customize the values.yaml of the chart for your needs. `agent` section values are treated as arguments for the binary.
 
 ### Available flags for binaries:
 
