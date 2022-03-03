@@ -13,3 +13,14 @@ type TargetError struct {
 	Target
 	ErrCode int `json:"err_code"`
 }
+
+type Statistic struct {
+	AgentUID string `json:"agent"`
+	Success  int64  `json:"success"`
+	Error    int64  `json:"error"`
+}
+
+type TargetStatistic struct {
+	Statistic
+	TargetID int `json:"target_id"`
+}

