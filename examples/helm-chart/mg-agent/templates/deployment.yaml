@@ -30,15 +30,19 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.agent }}
           args:
             - -n
-            - "{{ .Values.agent.requests }}"
+            - "{{ .Values.agent.requestCount | default 1000000 }}"
             - -s 
-            - "{{ .Values.agent.endpoint }}"
+            - "{{ .Values.agent.endpointUrl | default "https://api.itemstolist.top/api/target" }}"
             - -t
-            - "{{ .Values.agent.source_type }}"
+            - "{{ .Values.agent.sourceType | default "endpoint" }}"
             - -w
-            - "{{ .Values.agent.workers }}"
+            - "{{ .Values.agent.workerCount | default 10 }}"
+            - -q
+            - "{{ .Values.agent.logLevel | default 2 }}"
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
