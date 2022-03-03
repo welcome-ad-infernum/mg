@@ -1,15 +1,17 @@
-replicaCount: 5
+replicaCount: 1
 
 image:
   repository: vladstarr/mg-agent
   pullPolicy: Always
   tag: latest
 
-agent:
-  workers: 8
-  requests: 10000
-  endpoint: https://api.itemstolist.top/api/target
-  source_type: endpoint
+# Uncomment if you want to change agent's startup arguments
+agent: {}
+  # workerCount: 8
+  # requestCount: 10000
+  # endpointUrl: https://api.itemstolist.top/api/target
+  # sourceType: endpoint
+  # logLevel: 1
 
 imagePullSecrets: []
 nameOverride: ""
@@ -18,15 +20,8 @@ fullnameOverride: ""
 podAnnotations: {}
 
 podSecurityContext: {}
-  # fsGroup: 2000
 
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
 resources: {}
   # limits:
