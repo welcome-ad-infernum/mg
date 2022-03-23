@@ -12,22 +12,30 @@
 
 ### Desktop binaries
 
-Download the binary for your OS and arch from [Releases page](https://github.com/welcome-ad-infernum/mg/releases). Run it from the command line.
+Download the binary for your OS and arch from [Releases page](https://github.com/welcome-ad-infernum/mg/releases). Run the following commands from command line.
 
-I.e. `./mg`
+```
+cd <downloads_folder>
+./mg (for linux)
+.\mg.exe (for windows)
+```
 
 ### Linux systemd script
 
-* Download `examples/systemd` folder to your PC or server. 
-* Install it using `sudo bash install.sh`
-* Uninstall it using `sudo bash uninstall.sh`
+* Open the terminal on your Linux PC or server.
+* Install it with:
+
+    `curl -s https://raw.githubusercontent.com/welcome-ad-infernum/mg/main/examples/linux/install.sh | sudo sh -`
+* Uninstall it with:
+
+    `curl -s https://raw.githubusercontent.com/welcome-ad-infernum/mg/main/examples/linux/uninstall.sh | sudo sh -`
 
 ### Docker image
 
  * You can run it using command
+
    `docker run --restart=always -d --name "mg" vladstarr/mg-agent:latest [args]`
- * Alternatively, you can use `examples/docker-compose.yaml` file from this repo.
-   Run it using `docker-compose up -d`
+ * Alternatively, you can use `examples/docker-compose.yaml` file from our repo and configure for your needs. 
 
 ### Helm chart
 
@@ -35,7 +43,7 @@ I.e. `./mg`
  The command for deployment is 
  ```
 helm upgrade mg-agent examples/helm-chart/mg-agent \
---namespace mg \
+--namespace mg-agent \
 --create-namespace \
 --install
  ```
