@@ -14,7 +14,7 @@ module "vpc" {
   manage_default_security_group = true
   default_security_group_name   = var.name
   default_security_group_tags = {
-    "role" = "mg-agent"
+    "role" = "${var.name}"
   }
 
   default_security_group_ingress = [
@@ -38,8 +38,4 @@ module "vpc" {
       to_port     = 0
     },
   ]
-
-  tags = {
-    "role" = "mg-agent"
-  }
 }
