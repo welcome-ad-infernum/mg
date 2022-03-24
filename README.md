@@ -45,7 +45,7 @@
  The command for deployment is 
  ```
 helm upgrade mg-agent examples/helm-chart/mg-agent \
---namespace mg \
+--namespace mg-agent \
 --create-namespace \
 --install
  ```
