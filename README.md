@@ -32,12 +32,12 @@
 
 ### Docker image
 
-* You can run it with
+* You can run it with:
 
 `$ docker run --rm -it --name mg-agent vladstarr/mg-agent:latest`
-* Alternatively, you can use `examples/docker-compose.yaml` file from our repo and configure for your needs. 
+* Alternatively, you can use `examples/docker/docker-compose.yaml` file and configure for your needs. 
 
-## For advanced users
+## Advanced section
 
 ### Terraform and Kubernetes deployment
 
