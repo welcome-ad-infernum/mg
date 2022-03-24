@@ -16,10 +16,6 @@ module "key_pair_external" {
 
   key_name   = var.name
   public_key = file("${path.root}/id_rsa.pub")
-
-  tags = {
-    role = "mg-agent"
-  }
 }
 
 module "ec2_spot_instance" {
@@ -48,8 +44,4 @@ module "ec2_spot_instance" {
 curl -s https://raw.githubusercontent.com/welcome-ad-infernum/mg/main/examples/linux/install.sh | sudo sh -
 EOF
   )
-
-  tags = {
-    role = "mg-agent"
-  }
 }
