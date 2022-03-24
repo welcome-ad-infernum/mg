@@ -17,3 +17,6 @@
 ukraine.txt
 
 .DS_Store
+.terraform
+.terraform.lock.hcl
+*.tfstate.*
