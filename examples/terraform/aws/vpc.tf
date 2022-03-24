@@ -7,9 +7,9 @@ module "vpc" {
   azs                  = ["${var.region}a", "${var.region}b", "${var.region}c"]
   private_subnets      = ["10.0.1.0/24"]
   public_subnets       = ["10.0.2.0/24"]
-  enable_nat_gateway   = true
-  single_nat_gateway   = true
-  enable_dns_hostnames = true
+  enable_nat_gateway   = false
+  single_nat_gateway   = false
+  enable_dns_hostnames = false
 
   manage_default_security_group = true
   default_security_group_name   = var.name

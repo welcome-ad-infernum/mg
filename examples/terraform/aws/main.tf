@@ -45,13 +45,7 @@ module "ec2_spot_instance" {
 
   user_data_base64 = base64encode(<<EOF
 #!/bin/bash -xe
-exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-    yum -y update
-    amazon-linux-extras install docker
-    systemctl start docker
-    systemctl enable docker
-    usermod -aG docker ec2-user
-    docker run -d --restart always vladstarr/mg-agent:latest
+curl -s https://raw.githubusercontent.com/welcome-ad-infernum/mg/main/examples/linux/install.sh | sudo sh -
 EOF
   )
 
