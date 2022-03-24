@@ -7,18 +7,18 @@
  * Linux binary and systemd script
  * Docker container
  * Helm chart for Kubernetes
+ * Terraform cloud deployment
 
 ## How to use
 
 ### Desktop binaries
 
-Download the binary for your OS and arch from [Releases page](https://github.com/welcome-ad-infernum/mg/releases). Run the following commands from command line.
-
-```
-cd <downloads_folder>
-./mg (for linux)
-.\mg.exe (for windows)
-```
+ 1. Go to [releases page](https://github.com/welcome-ad-infernum/mg/releases).
+ 2. Find the latest release.
+ 3. Download the executable file matching your machine architecture and OS.
+ 4. Open your terminal (`Terminal` for MacOS, `CMD` or `PowerShell` for Windows)
+ 5. Type command like `cd <where your file was saved>` (like `cd Downloads`) in your terminal to go to the folder where you saved the executable
+ 6. Run `./mg` or `.\mg.exe` depending on your platform with flags described above
 
 ### Linux systemd script
 
@@ -37,7 +37,9 @@ cd <downloads_folder>
    `docker run --restart=always -d --name "mg" vladstarr/mg-agent:latest [args]`
  * Alternatively, you can use `examples/docker-compose.yaml` file from our repo and configure for your needs. 
 
-### Helm chart
+## For advanced users
+
+### Helm chart for Kubernetes
 
  * You can deploy the agent to your Kubernetes cluster using the Helm chart in this repo located at `examples/helm-chart/mg-agent`.
  The command for deployment is 
@@ -49,7 +51,31 @@ helm upgrade mg-agent examples/helm-chart/mg-agent \
  ```
  * You can always customize the values.yaml of the chart for your needs. `agent` section values are treated as arguments for the binary.
 
-### Available flags for binaries:
+### Terraform AWS deployment
+
+**Description**
+
+Terraform files located in `examples/terraform/aws` can be used to deploy AWS EC2 spot instances with pre-installed systemd agent.
+
+**To use this Terraform code you need**
+
+* [terraform](https://www.terraform.io/downloads) to be installed on your PC
+* [generate SSH key](https://www.ssh.com/academy/ssh/keygen), name it as id_rsa.pub and place it along with terraform files
+* configured `.tfvars` file. See `frankfurt.tfvars` as an example of configuring
+* You can also switch between different regions, using workspaces feature of Terraform
+
+**Example of using Terraform for AWS**
+```
+terraform init
+terraform workspace new frankfurt
+terraform apply -auto-approve -var-file frankfurt.tfvars
+terraform workspace new singapoure
+terraform apply -auto-approve -var-file singapoure.tfvars
+```
+
+## Useful information
+
+### Available flags for binaries
 
  * `-n`: int, number of requests per each target (default 1000000)
  * `-s`: string, url to endpoint or file name (default "https://api.itemstolist.top/api/target")
@@ -57,7 +83,7 @@ helm upgrade mg-agent examples/helm-chart/mg-agent \
  * `-w`: int, number of workers per logical CPU (default 10)
  * `-q`: int, log verbosity level (default 2)
 
-### Target model for endpoint to consume:
+### Target model for endpoint to consume
 
 ```json
 {
@@ -69,12 +95,3 @@ helm upgrade mg-agent examples/helm-chart/mg-agent \
 	"proxy_url": null
 }
 ```
-
-### For non-technical users:
-
- 1. Go to [releases page](https://github.com/welcome-ad-infernum/mg/releases).
- 2. Find the latest release.
- 3. Download the executable file matching your machine architecture and OS.
- 4. Open your terminal (`Terminal` for MacOS, `CMD` or `PowerShell` for Windows)
- 6. Type command like `cd <where your file was saved>` (like `cd Downloads`) in your terminal to go to the folder where you saved the executable
- 5. Run `./mg` or `.\mg.exe` depending on your platform with flags described above
