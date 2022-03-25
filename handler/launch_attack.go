@@ -3,21 +3,16 @@ package handler
 import (
 	"context"
 
-	"github.com/andriiyaremenko/tinycqs/command"
+	"github.com/andriiyaremenko/mg/dto"
+	"github.com/andriiyaremenko/pipelines"
 )
 
-func LaunchAttack(amountWorkers int) command.Handler {
-	return &command.BaseHandler{
-		Type:     "LAUNCH_ATTACK",
+func LaunchAttack(amountWorkers int) pipelines.Handler[dto.Target, dto.Target] {
+	return &pipelines.BaseHandler[dto.Target, dto.Target]{
 		NWorkers: 1,
-		HandleFunc: func(ctx context.Context, w command.EventWriter, e command.Event) {
-			defer w.Done()
-
+		HandleFunc: func(ctx context.Context, w pipelines.EventWriter[dto.Target], e pipelines.Event[dto.Target]) {
 			for i := amountWorkers; i > 0; i-- {
-				w.Write(command.E{
-					Type: "NUKE_TARGET",
-					P:    e.Payload(),
-				})
+				w.Write(e)
 			}
 		},
 	}

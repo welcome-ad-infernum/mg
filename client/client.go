@@ -1,7 +1,6 @@
 package client
 
 import (
-	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -11,42 +10,29 @@ import (
 
 const timeout = time.Duration(5 * time.Second)
 
-func New() http.Client {
-	transport := http.Transport{
-		Dial: dialTimeout,
-	}
-
-	client := http.Client{
-		Transport: &transport,
+func New(timeout time.Duration) *http.Client {
+	client := &http.Client{
+		Timeout: timeout,
 	}
 
 	return client
 }
 
-func WithProxy(proxy string) (http.Client, error) {
+func WithProxy(proxy string) (*http.Client, error) {
 	if proxy == "" {
-		return New(), nil
+		return New(timeout), nil
 	}
 
 	url, err := url.Parse(proxy)
 	if err != nil {
-		return http.Client{}, err
+		return nil, err
 	}
 
-	q := url.Query()
-	q.Add("timeout", timeout.String())
-
-	url.RawQuery = q.Encode()
-
 	transport := &http.Transport{Dial: socks.Dial(url.String())}
-
-	client := http.Client{
+	client := &http.Client{
+		Timeout:   timeout,
 		Transport: transport,
 	}
 
 	return client, nil
-}
-
-func dialTimeout(network, addr string) (net.Conn, error) {
-	return net.DialTimeout(network, addr, timeout)
 }

