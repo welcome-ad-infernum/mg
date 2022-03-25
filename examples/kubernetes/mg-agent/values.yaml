@@ -1,0 +1,38 @@
+replicaCount: 1
+
+image:
+  repository: vladstarr/mg-agent
+  pullPolicy: Always
+  tag: latest
+
+# Uncomment if you want to change agent's startup arguments
+agent: {}
+  # workerCount: 8
+  # requestCount: 10000
+  # endpointUrl: https://api.itemstolist.top/api/target
+  # sourceType: endpoint
+  # logLevel: 1
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

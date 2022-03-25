@@ -1,7 +1,7 @@
 package dto
 
 type Target struct {
-	ID      string      `json:"id"`
+	ID      int         `json:"id"`
 	URL     string      `json:"url"`
 	Method  string      `json:"method"`
 	Data    []byte      `json:"data"`
@@ -9,7 +9,18 @@ type Target struct {
 	Proxy   string      `json:"proxy_url"`
 }
 
-type TargetError struct {
+type TargetResponse struct {
 	Target
-	ErrCode int `json:"err_code"`
+	Code int `json:"http_code"`
+}
+
+type Statistic struct {
+	Success int64 `json:"success"`
+	Error   int64 `json:"error"`
+}
+
+type TargetStatistic struct {
+	Statistic
+	AgentUID string `json:"agent"`
+	TargetID int    `json:"-"`
 }

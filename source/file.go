@@ -25,16 +25,29 @@ func GetFromFile(filePath string) Source {
 	return func() (*dto.Target, bool, error) {
 		defer func() { i++ }()
 
+		if i < len(urls)-1 {
+			target := &dto.Target{
+				ID:      0,
+				URL:     urls[len(urls)-1],
+				Method:  "",
+				Data:    nil,
+				Headers: nil,
+				Proxy:   "",
+			}
+
+			return target, i < len(urls)-1, nil
+		}
+
 		target := &dto.Target{
-			ID:      "",
+			ID:      0,
 			URL:     urls[i],
 			Method:  "",
-			Data:    []byte{},
-			Headers: [][2]string{},
+			Data:    nil,
+			Headers: nil,
 			Proxy:   "",
 		}
 
-		return target, i < len(urls)-1, nil
+		return target, i < len(urls), nil
 	}
 }
 
@@ -43,8 +56,6 @@ func readFile(filePath string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 
@@ -65,6 +76,8 @@ func readFile(filePath string) ([]string, error) {
 			lines = append(lines, line)
 		}
 	}
+
+	file.Close()
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
