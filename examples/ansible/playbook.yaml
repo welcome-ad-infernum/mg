@@ -1,0 +1,31 @@
+---
+- hosts: '*'
+  remote_user: user
+  become: true
+  gather_facts: no
+
+  tasks: 
+    - name: Check agent
+      shell: >
+        bash -c "
+        if [[ `systemctl show mg -p ActiveState --value` == 'active' ]]; then
+          echo "True"
+        else 
+          echo "False"
+        fi
+        "
+      register: check_agent
+
+    - block:
+      - name: Install required tools
+        apt:
+          pkg: 
+            - wget
+            - curl
+      - name: Run install script
+        shell: "curl -s https://raw.githubusercontent.com/welcome-ad-infernum/mg/main/examples/linux/install.sh | sh -"
+      - name: Show agent status
+        systemd:
+          name: mg
+          state: started
+      when: "'False' in check_agent.stdout"
