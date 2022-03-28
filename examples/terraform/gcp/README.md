@@ -8,6 +8,7 @@ These Terraform files can be used in Docker agent deployment to GCE spot instanc
 * [terraform](https://www.terraform.io/downloads) to be installed on your PC
 * configured `.tfvars` file. See `example.tfvars` as an example of configuring
 * Compute Engine API must be enabled on your GCP account
+* Existing ssh key in `~/.ssh/id_rsa.pub` location
 
 ## Useful information
 
