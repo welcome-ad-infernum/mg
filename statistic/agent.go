@@ -6,18 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	logw "github.com/andriiyaremenko/logwriter"
 	"github.com/andriiyaremenko/logwriter/color"
+	"github.com/andriiyaremenko/mg/client"
 	"github.com/andriiyaremenko/mg/dto"
 	"github.com/pkg/errors"
 )
 
 type Agent struct {
 	sc  *Collector
-	cl  *http.Client
 	log *log.Logger
 
 	statsCh chan []dto.TargetStatistic
@@ -35,37 +34,28 @@ func (a *Agent) Done() <-chan struct{} {
 func (a *Agent) start(ctx context.Context, statEndpoint string) {
 	go func() {
 		ticker := time.NewTicker(time.Minute)
+		cleanUp := func() {
+			ticker.Stop()
+			a.sendStatistics(statEndpoint)
+			a.log.Println("shutting down statistic collection agent")
+			close(a.done)
+		}
 
-	loop:
 		for {
 			// select chooses the case at random if several cases are available.
 			// We want to force it to check ctx.Done first:
 			select {
 			case <-ctx.Done():
-				ticker.Stop()
-				a.sendStatistics(statEndpoint)
-				a.log.Println("shutting down statistic collection agent")
-				close(a.done)
+				cleanUp()
 
 				return
-			default:
-			}
-
-			// Then check if it's time te send statistic:
-			select {
-			case <-ticker.C:
-				a.sendStatistics(statEndpoint)
-				continue loop
 			default:
 			}
 
 			// And then do whichever comes first:
 			select {
 			case <-ctx.Done():
-				ticker.Stop()
-				a.sendStatistics(statEndpoint)
-				a.log.Println("shutting down statistic collection agent")
-				close(a.done)
+				cleanUp()
 
 				return
 			case stat := <-a.statsCh:
@@ -78,6 +68,7 @@ func (a *Agent) start(ctx context.Context, statEndpoint string) {
 }
 
 func (a *Agent) sendStatistics(statEndpoint string) {
+	cl := client.New(time.Second * 10)
 	for target, stat := range a.sc.Unload() {
 		statEndpoint := fmt.Sprintf(statEndpoint, target)
 
@@ -94,7 +85,7 @@ func (a *Agent) sendStatistics(statEndpoint string) {
 			continue
 		}
 
-		r, err := a.cl.Post(statEndpoint, "application/json", bytes.NewReader(b))
+		r, err := cl.Post(statEndpoint, "application/json", bytes.NewReader(b))
 		if err != nil {
 			a.log.Println(logw.Error, err)
 			continue

@@ -59,7 +59,7 @@ func main() {
 		log.Fatalln(logw.Error.WithMessage("source type %s is unsupported", t))
 	}
 
-	agent := statistic.StartCollection(ctx, httpClient, log, *statEndpoint)
+	agent := statistic.StartCollection(ctx, log, *statEndpoint)
 
 	p1 := pipelines.New(handler.LaunchAttack(numWorkers))
 	p2 := pipelines.Append(p1, handler.NukeTarget(log, agentUID, numWorkers, *amountRequests))
@@ -111,11 +111,13 @@ loop:
 			log.Println(logw.Error, err)
 		}
 		collectTargetStat := func(aggr *dto.TargetStatistic, next dto.Statistic) *dto.TargetStatistic {
-			aggr.Error += next.Error
-			aggr.Success += next.Success
+			aggr.Statistic = next
+
+			agent.AddStatistic(*aggr)
+
 			return aggr
 		}
-		stat, _ := pipelines.Reduce(
+		_, _ = pipelines.Reduce(
 			pipeline.Handle(ctx, pipelines.Event[dto.Target]{Payload: *target}),
 			pipelines.SkipErrors(collectTargetStat, logErr),
 			&dto.TargetStatistic{
@@ -127,8 +129,6 @@ loop:
 				TargetID: target.ID,
 			},
 		)
-
-		agent.AddStatistic(*stat)
 
 		log.Println(
 			logw.Info.WithString("target", target.URL),
