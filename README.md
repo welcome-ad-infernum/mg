@@ -7,7 +7,7 @@
  * Linux binary and systemd script
  * Docker container
  * Kubernetes helm chart
- * AWS and Azure terraform scripts
+ * AWS, Azure and GCP terraform scripts
 
 ## How to use
 

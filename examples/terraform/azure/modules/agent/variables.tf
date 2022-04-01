@@ -3,7 +3,7 @@ variable "instance_count" {
   description = "Azure container instance count"
 }
 variable "instance_regions" {
-  type        = set(string)
+  type        = string
   description = "Azure container instance zones"
 }
 variable "name" {
