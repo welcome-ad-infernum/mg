@@ -12,7 +12,6 @@ import (
 
 	logw "github.com/andriiyaremenko/logwriter"
 	"github.com/andriiyaremenko/logwriter/color"
-	"github.com/andriiyaremenko/mg/client"
 	"github.com/andriiyaremenko/mg/dto"
 	"github.com/andriiyaremenko/mg/handler"
 	"github.com/andriiyaremenko/mg/source"
@@ -45,7 +44,6 @@ func main() {
 	log.Printf("log verbosity level is %d", *q)
 
 	numWorkers := *workersPerCore * runtime.NumCPU()
-	httpClient := client.New(time.Second * 10)
 
 	var targetSource source.Source
 	switch *t {
@@ -53,7 +51,7 @@ func main() {
 		targetSource = source.GetFromFile(*s)
 		log.Printf("reading from file %s", color.ColorizeText(color.ANSIColorBlue, *s))
 	case "endpoint":
-		targetSource = source.GetFromEndpoint(httpClient, *s)
+		targetSource = source.GetFromEndpoint(*s)
 		log.Printf("reading from endpoint %s", color.ColorizeText(color.ANSIColorBlue, *s))
 	default:
 		log.Fatalln(logw.Error.WithMessage("source type %s is unsupported", t))
@@ -61,13 +59,14 @@ func main() {
 
 	agent := statistic.StartCollection(ctx, log, *statEndpoint)
 
-	p1 := pipelines.New(handler.LaunchAttack(numWorkers))
-	p2 := pipelines.Append(p1, handler.NukeTarget(log, agentUID, numWorkers, *amountRequests))
+	p1 := pipelines.New[dto.Target, dto.Target](handler.LaunchAttack(numWorkers))
+	p2 := pipelines.Append[dto.Target, dto.Target, dto.TargetResponse](
+		p1,
+		pipelines.WithHandlerPool(handler.NukeTarget(log, agentUID, *amountRequests), numWorkers),
+	)
 	pipeline := pipelines.Append[dto.Target, dto.TargetResponse, dto.Statistic](
-		p2, pipelines.WithErrorHandler(
-			handler.ProcessTargetResponse(log, numWorkers),
-			handler.HandleTargetError(numWorkers),
-		),
+		p2,
+		pipelines.WithOptions(handler.ProcessTargetResponse(log), handler.HandleTargetError, numWorkers),
 	)
 
 	c := make(chan os.Signal, 1)
@@ -107,27 +106,20 @@ loop:
 			logw.Info.WithString("target", target.URL),
 			color.ColorizeText(color.ANSIColorGreen, "launching an attack"))
 
-		logErr := func(err error) {
-			log.Println(logw.Error, err)
-		}
-		collectTargetStat := func(aggr *dto.TargetStatistic, next dto.Statistic) *dto.TargetStatistic {
-			aggr.Statistic = next
+		_ = pipelines.ForEach(
+			pipeline.Handle(ctx, *target),
+			func(_ int, next dto.Statistic) {
+				stats := dto.TargetStatistic{
+					Statistic: next,
+					AgentUID:  agentUID,
+					TargetID:  target.ID,
+				}
 
-			agent.AddStatistic(*aggr)
-
-			return aggr
-		}
-		_, _ = pipelines.Reduce(
-			pipeline.Handle(ctx, pipelines.Event[dto.Target]{Payload: *target}),
-			pipelines.SkipErrors(collectTargetStat, logErr),
-			&dto.TargetStatistic{
-				Statistic: dto.Statistic{
-					Success: 0,
-					Error:   0,
-				},
-				AgentUID: agentUID,
-				TargetID: target.ID,
+				agent.AddStatistic(stats)
 			},
+			pipelines.SkipErrors(func(err error) {
+				log.Println(logw.Error, err)
+			}),
 		)
 
 		log.Println(

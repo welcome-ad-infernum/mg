@@ -8,12 +8,9 @@ import (
 )
 
 func LaunchAttack(amountWorkers int) pipelines.Handler[dto.Target, dto.Target] {
-	return &pipelines.BaseHandler[dto.Target, dto.Target]{
-		NWorkers: 1,
-		HandleFunc: func(ctx context.Context, w pipelines.EventWriter[dto.Target], e pipelines.Event[dto.Target]) {
-			for i := amountWorkers; i > 0; i-- {
-				w.Write(e)
-			}
-		},
+	return func(ctx context.Context, w pipelines.EventWriter[dto.Target], target dto.Target) {
+		for i := amountWorkers; i > 0; i-- {
+			w.Write(pipelines.Event[dto.Target]{Payload: target})
+		}
 	}
 }

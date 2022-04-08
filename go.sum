@@ -2,6 +2,12 @@ github.com/andriiyaremenko/logwriter v0.0.1 h1:CG+/o3hl4x2+MgNa9kE25961WE8d98y46
 github.com/andriiyaremenko/logwriter v0.0.1/go.mod h1:NHfuOxQTCu7O3zT+LPzQNcciDbi7JhP4DwfG/RD4DrU=
 github.com/andriiyaremenko/pipelines v0.0.0-20220325120800-348e70145a3b h1:XLtdDSj0dh18LYwSaGRHwFsC/nZDgSs1WMPnyUW3Y80=
 github.com/andriiyaremenko/pipelines v0.0.0-20220325120800-348e70145a3b/go.mod h1:bXd4xZPjk32Xb08EJ8gvxZexPG5kKAQMgzVxHftySxE=
+github.com/andriiyaremenko/pipelines v0.0.0-20220402113913-f2038fa366f1 h1:Fyo2ePvjI6OmK9d0sjgvohfore62+uicHz5to4lLMP4=
+github.com/andriiyaremenko/pipelines v0.0.0-20220402113913-f2038fa366f1/go.mod h1:3qjeGsfRUn0nJlcjbgvKVwW1eEpKljFBynW0J2Qkyf0=
+github.com/andriiyaremenko/pipelines v0.0.0-20220406214252-9539477d7e80 h1:W6MpR0RByicEnpgnug2MaiMnIPAMVnCmiXPZkd7Zj4Q=
+github.com/andriiyaremenko/pipelines v0.0.0-20220406214252-9539477d7e80/go.mod h1:gf5KnrjkoP/xKo259er3lNTkVPQ3BHuH3Z72xmWuH2M=
+github.com/andriiyaremenko/pipelines v0.0.0-20220408070303-72d35cf742ad h1:ISzse3Qj4DPap51A8L/o7QffLYAnl396mbw6ePh/ol0=
+github.com/andriiyaremenko/pipelines v0.0.0-20220408070303-72d35cf742ad/go.mod h1:gf5KnrjkoP/xKo259er3lNTkVPQ3BHuH3Z72xmWuH2M=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=

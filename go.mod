@@ -9,6 +9,6 @@ require (
 )
 
 require (
-	github.com/andriiyaremenko/pipelines v0.0.0-20220325120800-348e70145a3b
+	github.com/andriiyaremenko/pipelines v0.0.0-20220408070303-72d35cf742ad
 	github.com/google/uuid v1.3.0
 )

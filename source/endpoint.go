@@ -3,14 +3,17 @@ package source
 import (
 	"encoding/json"
 	"io"
-	"net/http"
 	"strings"
+	"time"
 
+	"github.com/andriiyaremenko/mg/client"
 	"github.com/andriiyaremenko/mg/dto"
 )
 
-func GetFromEndpoint(client *http.Client, managerURL string) Source {
+func GetFromEndpoint(managerURL string) Source {
 	return func() (*dto.Target, bool, error) {
+		client := client.New(time.Second * 10)
+
 		r, err := client.Get(managerURL)
 		if err != nil {
 			return nil, true, err

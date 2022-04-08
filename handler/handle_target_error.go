@@ -7,24 +7,17 @@ import (
 	"github.com/andriiyaremenko/pipelines"
 )
 
-func HandleTargetError(numWorkers int) pipelines.Handler[dto.TargetResponse, dto.Statistic] {
-	return &pipelines.BaseHandler[dto.TargetResponse, dto.Statistic]{
-		NWorkers: numWorkers,
-		HandleFunc: func(ctx context.Context, w pipelines.EventWriter[dto.Statistic], e pipelines.Event[dto.TargetResponse]) {
-			target := e.Payload
-			if target.ID != 0 {
+func HandleTargetError(ctx context.Context, w pipelines.EventWriter[dto.Statistic], err error) {
+	if _, ok := err.(*pipelines.Error[bool]); ok {
+		w.Write(pipelines.Event[dto.Statistic]{
+			Payload: dto.Statistic{
+				Success: 0,
+				Error:   1,
+			},
+		})
 
-				w.Write(pipelines.Event[dto.Statistic]{
-					Payload: dto.Statistic{
-						Success: 0,
-						Error:   1,
-					},
-				})
-
-				return
-			}
-
-			w.Write(pipelines.NewErr[dto.Statistic](e.Err))
-		},
+		return
 	}
+
+	w.Write(pipelines.NewErrEvent[dto.Statistic](err))
 }
